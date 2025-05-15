@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import psycopg2
 from datetime import datetime, timezone
 import time
-import GMU
+
 
 # Carica le variabili dall'.env
 load_dotenv()
@@ -20,6 +20,7 @@ def get_connection():
     return psycopg2.connect(**DB_CONFIG)
 
 def insert_gmu_5m():
+    import GMU
     gmu_value = GMU.GMU()
     if gmu_value is None:
         print("Errore: GMU non calcolato.")
