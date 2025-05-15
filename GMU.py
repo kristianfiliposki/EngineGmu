@@ -36,7 +36,7 @@ def GMU():
     """ NOTA BENE ALPHA+BETA+GAMMA+DELTA == 1 """
 
     """ risoluzione della formula """
-    gmu=((1-delta-omega)*sommaTOT)+(delta*goldprice)+(omega*btcprice)
+    gmu=((1-delta-omega)*sommaTOT)+(delta*goldprice)
     """ L'INDICE MONDIALE HA UN NOME ||||GMU||||| """
     print("GMU NOW",gmu)
     return gmu
