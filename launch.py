@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import psycopg2
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import GMU
 
@@ -19,17 +19,14 @@ DB_CONFIG = {
 def get_connection():
     return psycopg2.connect(**DB_CONFIG)
 
-
-def get_connection():
-    return psycopg2.connect(**DB_CONFIG)
-
 def insert_gmu_5m():
     gmu_value = GMU.GMU()
     if gmu_value is None:
         print("Errore: GMU non calcolato.")
         return
 
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Timestamp UTC
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -44,12 +41,13 @@ def insert_gmu_5m():
                 VALUES (%s, %s)
                 ON CONFLICT (timestamp) DO UPDATE SET gmu_value = EXCLUDED.gmu_value
             """, (timestamp, gmu_value))
-        print(f"[5M] Inserito GMU: {gmu_value} @ {timestamp}")
+        print(f"[5M] Inserito GMU: {gmu_value} @ {timestamp} (UTC)")
 
 def insert_gmu_daily_summary():
-    today = datetime.now().strftime("%Y-%m-%d")
-    start = today + " 00:00:00"
-    end = today + " 23:59:59"
+    # Data in UTC
+    today_utc = datetime.now(timezone.utc).date()
+    start = f"{today_utc} 00:00:00"
+    end = f"{today_utc} 23:59:59"
 
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -63,7 +61,11 @@ def insert_gmu_daily_summary():
             cursor.execute("""
                 SELECT AVG(gmu_value),
                        MAX(timestamp),
-                       (SELECT gmu_value FROM gmu_5m WHERE timestamp = (SELECT MAX(timestamp) FROM gmu_5m WHERE timestamp BETWEEN %s AND %s))
+                       (SELECT gmu_value FROM gmu_5m WHERE timestamp = (
+                           SELECT MAX(timestamp)
+                           FROM gmu_5m
+                           WHERE timestamp BETWEEN %s AND %s
+                       ))
                 FROM gmu_5m
                 WHERE timestamp BETWEEN %s AND %s
             """, (start, end, start, end))
@@ -75,16 +77,18 @@ def insert_gmu_daily_summary():
                 cursor.execute("""
                     INSERT INTO gmu_1d (date, average_gmu, last_gmu)
                     VALUES (%s, %s, %s)
-                    ON CONFLICT (date) DO UPDATE SET average_gmu = EXCLUDED.average_gmu, last_gmu = EXCLUDED.last_gmu
-                """, (today, avg, last))
-                print(f"[1D] Salvata media: {avg}, ultimo: {last} per il {today}")
+                    ON CONFLICT (date) DO UPDATE
+                        SET average_gmu = EXCLUDED.average_gmu,
+                            last_gmu = EXCLUDED.last_gmu
+                """, (today_utc, avg, last))
+                print(f"[1D] Salvata media: {avg}, ultimo: {last} per il {today_utc} (UTC)")
             else:
-                print(f"[1D] Nessun dato GMU per il {today}")
+                print(f"[1D] Nessun dato GMU per il {today_utc} (UTC)")
 
 def loop_generatore():
-    last_day = datetime.now().date()
+    last_day = datetime.now(timezone.utc).date()
     while True:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         insert_gmu_5m()
 
         if now.date() != last_day:
