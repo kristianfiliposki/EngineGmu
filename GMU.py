@@ -27,9 +27,9 @@ def GMU():
     tassi=effects.tassodicambio.tassidicambio3()
     old, new = effects.history_dates.scarica_dati_storici()
     mediaValValutari=workingDates.mediaTassi.mediaTassi(tassi,old,new)
-    btcprice=effects.cuscinetti.btcPrice()
-    print(btcprice)
+    #btcprice=effects.cuscinetti.btcPrice()
     goldprice=effects.cuscinetti.goldPrice()
+    print(goldprice)
     sommaTOT=Sommatoria(tassi,mediaValValutari,countries,alpha,beta,old,new)
     
 
