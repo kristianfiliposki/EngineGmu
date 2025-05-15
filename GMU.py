@@ -38,6 +38,7 @@ def GMU():
     gmu=((1-delta-omega)*sommaTOT)
     
     """ L'INDICE MONDIALE HA UN NOME ||||GMU||||| """
+    print("GMU NOW",gmu)
     return gmu
 
 def Sommatoria(tassi,media,countries,alpha,beta,oldData,newData):
