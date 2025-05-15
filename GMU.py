@@ -27,15 +27,15 @@ def GMU():
     tassi=effects.tassodicambio.tassidicambio3()
     old, new = effects.history_dates.scarica_dati_storici()
     mediaValValutari=workingDates.mediaTassi.mediaTassi(tassi,old,new)
-    #btcprice=effects.cuscinetti.btcPrice()
-    #goldprice=effects.cuscinetti.goldPrice()
+    btcprice=effects.cuscinetti.btcPrice()
+    goldprice=effects.cuscinetti.goldPrice()
     sommaTOT=Sommatoria(tassi,mediaValValutari,countries,alpha,beta,old,new)
     
 
     """ NOTA BENE ALPHA+BETA+GAMMA+DELTA == 1 """
 
     """ risoluzione della formula """
-    gmu=((1-delta-omega)*sommaTOT)
+    gmu=((1-delta-omega)*sommaTOT)+(delta*goldprice)+(omega*btcprice)
     """ L'INDICE MONDIALE HA UN NOME ||||GMU||||| """
     print("GMU NOW",gmu)
     return gmu
