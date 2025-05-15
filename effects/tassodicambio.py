@@ -8,7 +8,7 @@ def tassodicambio():
 
 def tassidicambio3():
     cdnjsdeliver="https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json"
-    cdnjsdeliver_response = requests.get(cdnjsdeliver)
+    cdnjsdeliver_response = requests.get(cdnjsdeliver,headers={"Cache-Control": "no-cache"})
     return cdnjsdeliver_response.json()["usd"]
 
 
