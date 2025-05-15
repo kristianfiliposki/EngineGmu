@@ -36,7 +36,6 @@ def GMU():
 
     """ risoluzione della formula """
     gmu=((1-delta-omega)*sommaTOT)
-    
     """ L'INDICE MONDIALE HA UN NOME ||||GMU||||| """
     print("GMU NOW",gmu)
     return gmu
@@ -62,7 +61,7 @@ def Sommatoria(tassi,media,countries,alpha,beta,oldData,newData):
         stabilita=workingDates.ratingDate.ratingCoin(coin,oldData,newData)["stability_score"]
         totSt+=stabilita
         sommatoria+=tassoNormalizzato*(1+((alpha*usabilita)+(beta*stabilita)))
-    print(totSt,totUS)
+    print(sommatoria)
     return sommatoria 
 
 
