@@ -25,8 +25,8 @@ def insert_gmu_5m():
         print("Errore: GMU non calcolato.")
         return
 
-    # Timestamp UTC
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
+    print(f"[DEBUG] Inserimento GMU: {gmu_value} timestamp: {timestamp}")
 
     with get_connection() as conn:
         with conn.cursor() as cursor:
