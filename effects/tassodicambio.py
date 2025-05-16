@@ -1,3 +1,4 @@
+import time
 import requests
 
 
@@ -7,8 +8,9 @@ def tassodicambio():
     return exchange_response.json()['conversion_rates']
 
 def tassidicambio3():
-    cdnjsdeliver="https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json"
-    cdnjsdeliver_response = requests.get(cdnjsdeliver,headers={"Cache-Control": "no-cache"})
-    return cdnjsdeliver_response.json()["usd"]
-
+    timestamp = int(time.time())
+    url = f"https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json?nocache={timestamp}"
+    response = requests.get(url, headers={"Cache-Control": "no-cache"})
+    print("Response headers:", response.headers)  # Debug cache
+    return response.json()["usd"]
 

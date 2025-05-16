@@ -1,3 +1,4 @@
+import importlib
 import os
 from dotenv import load_dotenv
 import psycopg2
@@ -21,12 +22,13 @@ def get_connection():
 
 def insert_gmu_5m():
     import GMU
+    importlib.reload(GMU)  # Forza il reload del modulo per ricalcolare GMU
+
     gmu_value = GMU.GMU()
     if gmu_value is None:
         print("Errore: GMU non calcolato.")
         return
 
-    # Timestamp UTC
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
     with get_connection() as conn:
@@ -43,6 +45,7 @@ def insert_gmu_5m():
                 ON CONFLICT (timestamp) DO UPDATE SET gmu_value = EXCLUDED.gmu_value
             """, (timestamp, gmu_value))
         print(f"[5M] Inserito GMU: {gmu_value} @ {timestamp} (UTC)")
+
 
 def insert_gmu_daily_summary():
     # Data in UTC
