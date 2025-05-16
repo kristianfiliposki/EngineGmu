@@ -1,12 +1,11 @@
-import importlib
-import os
+from fastapi import FastAPI
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 import psycopg2
-from datetime import datetime, timezone
-import time
+import os
+import GMU
 
-
-# Carica le variabili dall'.env
+app = FastAPI()
 load_dotenv()
 
 DB_CONFIG = {
@@ -20,14 +19,11 @@ DB_CONFIG = {
 def get_connection():
     return psycopg2.connect(**DB_CONFIG)
 
+@app.get("/gmu_5m")
 def insert_gmu_5m():
-    import GMU
-    importlib.reload(GMU)  # Forza il reload del modulo per ricalcolare GMU
-
     gmu_value = GMU.GMU()
     if gmu_value is None:
-        print("Errore: GMU non calcolato.")
-        return
+        return {"error": "GMU non calcolato."}
 
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -44,11 +40,11 @@ def insert_gmu_5m():
                 VALUES (%s, %s)
                 ON CONFLICT (timestamp) DO UPDATE SET gmu_value = EXCLUDED.gmu_value
             """, (timestamp, gmu_value))
-        print(f"[5M] Inserito GMU: {gmu_value} @ {timestamp} (UTC)")
 
+    return {"message": "Inserito GMU", "value": gmu_value, "timestamp": timestamp}
 
+@app.get("/gmu_1d")
 def insert_gmu_daily_summary():
-    # Data in UTC
     today_utc = datetime.now(timezone.utc).date()
     start = f"{today_utc} 00:00:00"
     end = f"{today_utc} 23:59:59"
@@ -73,7 +69,7 @@ def insert_gmu_daily_summary():
                 FROM gmu_5m
                 WHERE timestamp BETWEEN %s AND %s
             """, (start, end, start, end))
-            
+
             result = cursor.fetchone()
             avg, _, last = result
 
@@ -85,21 +81,12 @@ def insert_gmu_daily_summary():
                         SET average_gmu = EXCLUDED.average_gmu,
                             last_gmu = EXCLUDED.last_gmu
                 """, (today_utc, avg, last))
-                print(f"[1D] Salvata media: {avg}, ultimo: {last} per il {today_utc} (UTC)")
+                return {
+                    "message": "Media salvata",
+                    "average": avg,
+                    "last": last,
+                    "date": str(today_utc)
+                }
             else:
-                print(f"[1D] Nessun dato GMU per il {today_utc} (UTC)")
+                return {"message": "Nessun dato GMU disponibile per oggi"}
 
-def loop_generatore():
-    last_day = datetime.now(timezone.utc).date()
-    while True:
-        now = datetime.now(timezone.utc)
-        insert_gmu_5m()
-
-        if now.date() != last_day:
-            insert_gmu_daily_summary()
-            last_day = now.date()
-
-        time.sleep(5 * 60)
-
-if __name__ == "__main__":
-    loop_generatore()
