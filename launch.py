@@ -48,7 +48,7 @@ def insert_gmu_5m():
 
     return {"message": "Inserito GMU", "value": gmu_value, "timestamp": timestamp}
 
-@app.get("/gmu_1d")
+@app.get("/1d")
 def insert_gmu_daily_summary():
     today_utc = datetime.now(timezone.utc).date()
     start = f"{today_utc} 00:00:00"
