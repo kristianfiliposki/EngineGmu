@@ -24,9 +24,16 @@ def GMU():
 
     """ dati calcolati """
     countries=effects.country.dataCountry()
+    print("countries: ",countries)
     tassi=effects.tassodicambio.tassidicambio3()
+    print("tassidicambio : ",tassi)
+
     old, new = effects.history_dates.scarica_dati_storici()
+    print("dati vecchi/nuovi: ",old,new)
+
     mediaValValutari=workingDates.mediaTassi.mediaTassi(tassi,old,new)
+    print("media mondiale delle valute: ",mediaValValutari)
+
     #btcprice=effects.cuscinetti.btcPrice()
     #goldprice=effects.cuscinetti.goldPrice()
     sommaTOT=Sommatoria(tassi,mediaValValutari,countries,alpha,beta,old,new)
