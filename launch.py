@@ -19,12 +19,53 @@ DB_CONFIG = {
 def get_connection():
     return psycopg2.connect(**DB_CONFIG)
 
+
 @app.get("/")
-def welcome():
-    return "Welcome "
+def get_last_price():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT timestamp, gmu_value
+                FROM gmu_5m
+                ORDER BY timestamp DESC
+                LIMIT 1;
+            """)
+            row = cur.fetchone()
+            return {"timestamp": row[0], "gmu_value": row[1]} if row else {"error": "Nessun dato disponibile"}
 
 
 @app.get("/5m")
+def get_gmu_today():
+    today = datetime.now().strftime("%Y-%m-%d")
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT timestamp, gmu_value
+                FROM gmu_5m
+                WHERE timestamp::date = %s
+                ORDER BY timestamp ASC;
+            """, (today,))
+            rows = cur.fetchall()
+            return [{"timestamp": row[0], "gmu_value": row[1]} for row in rows]
+
+
+@app.get("/1d")
+def get_daily_summary():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT date, average_gmu, last_gmu
+                FROM gmu_1d
+                ORDER BY date ASC;
+            """)
+            rows = cur.fetchall()
+            return [
+                {"date": row[0], "average_gmu": row[1], "last_gmu": row[2]}
+                for row in rows
+            ]
+
+
+@app.get("/insert5m")
 def insert_gmu_5m():
     
 
@@ -47,7 +88,7 @@ def insert_gmu_5m():
 
     return {"message": "Inserito GMU", "value":GMU.GMU() , "timestamp": timestamp}
 
-@app.get("/1d")
+@app.get("/insert1d")
 def insert_gmu_daily_summary():
     today_utc = datetime.now(timezone.utc).date()
     start = f"{today_utc} 00:00:00"
