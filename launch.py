@@ -19,7 +19,12 @@ DB_CONFIG = {
 def get_connection():
     return psycopg2.connect(**DB_CONFIG)
 
-@app.get("/gmu_5m")
+@app.get("/")
+def welcome():
+    return "Welcome "
+
+
+@app.get("/5m")
 def insert_gmu_5m():
     gmu_value = GMU.GMU()
     if gmu_value is None:
