@@ -26,9 +26,7 @@ def welcome():
 
 @app.get("/5m")
 def insert_gmu_5m():
-    gmu_value = GMU.GMU()
-    if gmu_value is None:
-        return {"error": "GMU non calcolato."}
+    
 
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -44,9 +42,10 @@ def insert_gmu_5m():
                 INSERT INTO gmu_5m (timestamp, gmu_value)
                 VALUES (%s, %s)
                 ON CONFLICT (timestamp) DO UPDATE SET gmu_value = EXCLUDED.gmu_value
-            """, (timestamp, gmu_value))
+            """, (timestamp, GMU.GMU()))
+    
 
-    return {"message": "Inserito GMU", "value": gmu_value, "timestamp": timestamp}
+    return {"message": "Inserito GMU", "value":GMU.GMU() , "timestamp": timestamp}
 
 @app.get("/1d")
 def insert_gmu_daily_summary():
