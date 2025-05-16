@@ -22,17 +22,7 @@ def get_connection():
 
 @app.get("/")
 def get_last_price():
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT timestamp, gmu_value
-                FROM gmu_5m
-                ORDER BY timestamp DESC
-                LIMIT 1;
-            """)
-            row = cur.fetchone()
-            return {"timestamp": row[0], "gmu_value": row[1]} if row else {"error": "Nessun dato disponibile"}
-
+    return GMU.GMU()
 
 @app.get("/5m")
 def get_gmu_today():
