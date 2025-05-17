@@ -138,40 +138,51 @@ def insert_gmu_daily_summary():
                 CREATE TABLE IF NOT EXISTS gmu_1d (
                     date DATE PRIMARY KEY,
                     average_gmu DOUBLE PRECISION,
+                    max_gmu DOUBLE PRECISION,
+                    min_gmu DOUBLE PRECISION,
                     last_gmu DOUBLE PRECISION
                 )
             """)
+
             cursor.execute("""
-                SELECT AVG(gmu_value),
-                       MAX(timestamp),
-                       (SELECT gmu_value FROM gmu_5m WHERE timestamp = (
-                           SELECT MAX(timestamp)
-                           FROM gmu_5m
-                           WHERE timestamp BETWEEN %s AND %s
-                       ))
+                SELECT 
+                    AVG(gmu_value),
+                    MAX(gmu_value),
+                    MIN(gmu_value),
+                    (SELECT gmu_value FROM gmu_5m WHERE timestamp = (
+                        SELECT MAX(timestamp)
+                        FROM gmu_5m
+                        WHERE timestamp BETWEEN %s AND %s
+                    ))
                 FROM gmu_5m
                 WHERE timestamp BETWEEN %s AND %s
             """, (start, end, start, end))
 
             result = cursor.fetchone()
-            avg, _, last = result
+            avg, max_val, min_val, last = result
 
             if avg is not None:
                 cursor.execute("""
-                    INSERT INTO gmu_1d (date, average_gmu, last_gmu)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO gmu_1d (date, average_gmu, max_gmu, min_gmu, last_gmu)
+                    VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT (date) DO UPDATE
                         SET average_gmu = EXCLUDED.average_gmu,
+                            max_gmu = EXCLUDED.max_gmu,
+                            min_gmu = EXCLUDED.min_gmu,
                             last_gmu = EXCLUDED.last_gmu
-                """, (today_utc, avg, last))
+                """, (today_utc, avg, max_val, min_val, last))
+                
                 return {
-                    "message": "Media salvata",
+                    "message": "Media giornaliera salvata",
                     "average": avg,
+                    "max": max_val,
+                    "min": min_val,
                     "last": last,
                     "date": str(today_utc)
                 }
             else:
                 return {"message": "Nessun dato GMU disponibile per oggi"}
+
 
 
 @app.get("/cleanup_5m")
