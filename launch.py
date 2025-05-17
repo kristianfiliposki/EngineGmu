@@ -184,12 +184,3 @@ def insert_gmu_daily_summary():
                 return {"message": "Nessun dato GMU disponibile per oggi"}
 
 
-
-@app.get("/cleanup_5m")
-def cleanup_old_gmu_5m():
-    cutoff = datetime.now(timezone.utc) - timedelta(days=30)
-    with get_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM gmu_5m WHERE timestamp < %s", (cutoff,))
-            deleted = cursor.rowcount
-    return {"message": f"Cancellati {deleted} record più vecchi di 30 giorni"}
