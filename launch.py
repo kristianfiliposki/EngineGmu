@@ -1,9 +1,11 @@
 from fastapi import FastAPI
-from datetime import datetime, timezone
+import workingDates
+from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 import psycopg2
 import os
 import GMU
+import workingDates.mediaTassi
 
 app = FastAPI()
 load_dotenv()
@@ -23,6 +25,10 @@ def get_connection():
 @app.get("/")
 def get_last_price():
     return GMU.GMU()
+
+@app.get("/avgWorldValue")
+def ratingList():
+    return workingDates.mediaTassi()
 
 @app.get("/5m")
 def get_gmu_today():
@@ -57,8 +63,6 @@ def get_daily_summary():
 
 @app.get("/insert5m")
 def insert_gmu_5m():
-    
-
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
     with get_connection() as conn:
@@ -74,9 +78,53 @@ def insert_gmu_5m():
                 VALUES (%s, %s)
                 ON CONFLICT (timestamp) DO UPDATE SET gmu_value = EXCLUDED.gmu_value
             """, (timestamp, GMU.GMU()))
-    
 
-    return {"message": "Inserito GMU", "value":GMU.GMU() , "timestamp": timestamp}
+    return {"message": "Inserito GMU", "value": GMU.GMU(), "timestamp": timestamp}
+
+
+@app.get("/insert1h")
+def insert_hourly_summary():
+    now = datetime.now(timezone.utc)
+    end = now.replace(minute=0, second=0, microsecond=0)
+    start = end - timedelta(hours=1)
+
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS gmu_1h (
+                    hour TIMESTAMP PRIMARY KEY,
+                    average_gmu DOUBLE PRECISION,
+                    max_gmu DOUBLE PRECISION,
+                    min_gmu DOUBLE PRECISION
+                )
+            """)
+            cursor.execute("""
+                SELECT AVG(gmu_value), MAX(gmu_value), MIN(gmu_value)
+                FROM gmu_5m
+                WHERE timestamp BETWEEN %s AND %s
+            """, (start, end))
+            avg, max_val, min_val = cursor.fetchone()
+
+            if avg is not None:
+                cursor.execute("""
+                    INSERT INTO gmu_1h (hour, average_gmu, max_gmu, min_gmu)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (hour) DO UPDATE
+                    SET average_gmu = EXCLUDED.average_gmu,
+                        max_gmu = EXCLUDED.max_gmu,
+                        min_gmu = EXCLUDED.min_gmu
+                """, (start, avg, max_val, min_val))
+
+                return {
+                    "message": "Dati orari salvati",
+                    "start": str(start),
+                    "average": avg,
+                    "max": max_val,
+                    "min": min_val
+                }
+            else:
+                return {"message": "Nessun dato GMU disponibile per quest'ora"}
+
 
 @app.get("/insert1d")
 def insert_gmu_daily_summary():
@@ -125,3 +173,12 @@ def insert_gmu_daily_summary():
             else:
                 return {"message": "Nessun dato GMU disponibile per oggi"}
 
+
+@app.get("/cleanup_5m")
+def cleanup_old_gmu_5m():
+    cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM gmu_5m WHERE timestamp < %s", (cutoff,))
+            deleted = cursor.rowcount
+    return {"message": f"Cancellati {deleted} record più vecchi di 30 giorni"}

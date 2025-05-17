@@ -66,6 +66,12 @@ def Sommatoria(tassi,media,countries,alpha,beta,oldData,newData):
     print(sommatoria)
     return sommatoria 
 
+def ratingList():
+    tassi=effects.tassodicambio.tassidicambio3()
+    old, new = effects.history_dates.scarica_dati_storici()
+    return workingDates.ratingDate.listratingcoin(tassi,old,new)
+
+
 
 
 if __name__ == "__main__":
