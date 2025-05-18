@@ -28,7 +28,11 @@ def get_last_price():
 
 @app.get("/avgWorldValue")
 def ratingList():
-    return workingDates.mediaTassi.mediaTassi()
+    import effects
+    tassi=effects.tassodicambio.tassidicambio3()
+    old, new = effects.history_dates.scarica_dati_storici()
+    mediaValValutari=workingDates.mediaTassi.mediaTassi(tassi,old,new)
+    return  mediaValValutari
 
 @app.get("/5m")
 def get_gmu_today():
