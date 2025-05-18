@@ -126,12 +126,11 @@ def insert_hourly_summary():
                 return {"message": "Nessun dato GMU disponibile per quest'ora"}
 
 
-
 @app.get("/insert1d")
-def insert_gmu_daily_summary():
-    today_utc = datetime.now(timezone.utc).date()
-    start = datetime.combine(today_utc, time.min).replace(tzinfo=timezone.utc)
-    end = datetime.combine(today_utc, time.max).replace(tzinfo=timezone.utc)
+def insert_daily_summary():
+    now = datetime.now(timezone.utc)
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    end = start + timedelta(days=1)
 
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -146,43 +145,42 @@ def insert_gmu_daily_summary():
             """)
 
             cursor.execute("""
-                SELECT 
-                    AVG(gmu_value),
-                    MAX(gmu_value),
-                    MIN(gmu_value),
-                    (
-                        SELECT gmu_value FROM gmu_5m 
-                        WHERE timestamp = (
-                            SELECT MAX(timestamp)
-                            FROM gmu_5m
-                            WHERE timestamp BETWEEN %s AND %s
-                        )
-                    )
+                SELECT AVG(gmu_value), MAX(gmu_value), MIN(gmu_value)
                 FROM gmu_5m
                 WHERE timestamp BETWEEN %s AND %s
-            """, (start, end, start, end))
+            """, (start, end))
 
-            result = cursor.fetchone()
-            if result and all(x is not None for x in result):
-                avg, max_val, min_val, last = result
+            avg, max_val, min_val = cursor.fetchone()
 
+            # Recupero dell'ultimo valore GMU della giornata
+            cursor.execute("""
+                SELECT gmu_value
+                FROM gmu_5m
+                WHERE timestamp BETWEEN %s AND %s
+                ORDER BY timestamp DESC
+                LIMIT 1
+            """, (start, end))
+            last_row = cursor.fetchone()
+            last_val = last_row[0] if last_row else None
+
+            if avg is not None and last_val is not None:
                 cursor.execute("""
                     INSERT INTO gmu_1d (date, average_gmu, max_gmu, min_gmu, last_gmu)
                     VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT (date) DO UPDATE
-                        SET average_gmu = EXCLUDED.average_gmu,
-                            max_gmu = EXCLUDED.max_gmu,
-                            min_gmu = EXCLUDED.min_gmu,
-                            last_gmu = EXCLUDED.last_gmu
-                """, (today_utc, avg, max_val, min_val, last))
+                    SET average_gmu = EXCLUDED.average_gmu,
+                        max_gmu = EXCLUDED.max_gmu,
+                        min_gmu = EXCLUDED.min_gmu,
+                        last_gmu = EXCLUDED.last_gmu
+                """, (start.date(), avg, max_val, min_val, last_val))
 
                 return {
                     "message": "Media giornaliera salvata",
+                    "date": str(start.date()),
                     "average": avg,
                     "max": max_val,
                     "min": min_val,
-                    "last": last,
-                    "date": str(today_utc)
+                    "last": last_val
                 }
 
             return {"message": "Nessun dato GMU disponibile per oggi"}
