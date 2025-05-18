@@ -128,9 +128,9 @@ def insert_hourly_summary():
 
 @app.get("/insert1d")
 def insert_gmu_daily_summary():
-    today_utc = datetime.now(timezone.utc).date()
-    start = f"{today_utc} 00:00:00"
-    end = f"{today_utc} 23:59:59"
+    today_utc = datetime.now().date()
+    start = datetime.combine(today_utc, datetime.min.time())
+    end = datetime.combine(today_utc, datetime.max.time().replace(microsecond=0))
 
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -149,11 +149,14 @@ def insert_gmu_daily_summary():
                     AVG(gmu_value),
                     MAX(gmu_value),
                     MIN(gmu_value),
-                    (SELECT gmu_value FROM gmu_5m WHERE timestamp = (
-                        SELECT MAX(timestamp)
-                        FROM gmu_5m
-                        WHERE timestamp BETWEEN %s AND %s
-                    ))
+                    (
+                        SELECT gmu_value FROM gmu_5m 
+                        WHERE timestamp = (
+                            SELECT MAX(timestamp)
+                            FROM gmu_5m
+                            WHERE timestamp BETWEEN %s AND %s
+                        )
+                    )
                 FROM gmu_5m
                 WHERE timestamp BETWEEN %s AND %s
             """, (start, end, start, end))
@@ -171,7 +174,7 @@ def insert_gmu_daily_summary():
                             min_gmu = EXCLUDED.min_gmu,
                             last_gmu = EXCLUDED.last_gmu
                 """, (today_utc, avg, max_val, min_val, last))
-                
+
                 return {
                     "message": "Media giornaliera salvata",
                     "average": avg,
@@ -182,5 +185,3 @@ def insert_gmu_daily_summary():
                 }
             else:
                 return {"message": "Nessun dato GMU disponibile per oggi"}
-
-
