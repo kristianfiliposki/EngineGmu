@@ -126,11 +126,12 @@ def insert_hourly_summary():
                 return {"message": "Nessun dato GMU disponibile per quest'ora"}
 
 
+
 @app.get("/insert1d")
 def insert_gmu_daily_summary():
-    today_utc = datetime.now().date()
-    start = datetime.combine(today_utc, datetime.min.time())
-    end = datetime.combine(today_utc, datetime.max.time().replace(microsecond=0))
+    today_utc = datetime.now(timezone.utc).date()
+    start = datetime.combine(today_utc, time.min).replace(tzinfo=timezone.utc)
+    end = datetime.combine(today_utc, time.max).replace(tzinfo=timezone.utc)
 
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -162,9 +163,9 @@ def insert_gmu_daily_summary():
             """, (start, end, start, end))
 
             result = cursor.fetchone()
-            avg, max_val, min_val, last = result
+            if result and all(x is not None for x in result):
+                avg, max_val, min_val, last = result
 
-            if avg is not None:
                 cursor.execute("""
                     INSERT INTO gmu_1d (date, average_gmu, max_gmu, min_gmu, last_gmu)
                     VALUES (%s, %s, %s, %s, %s)
@@ -183,5 +184,5 @@ def insert_gmu_daily_summary():
                     "last": last,
                     "date": str(today_utc)
                 }
-            else:
-                return {"message": "Nessun dato GMU disponibile per oggi"}
+
+            return {"message": "Nessun dato GMU disponibile per oggi"}
