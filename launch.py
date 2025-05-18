@@ -28,7 +28,7 @@ def get_last_price():
 
 @app.get("/avgWorldValue")
 def ratingList():
-    return workingDates.mediaTassi()
+    return workingDates.mediaTassi.mediaTassi()
 
 @app.get("/5m")
 def get_gmu_today():
