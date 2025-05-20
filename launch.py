@@ -6,6 +6,9 @@ import psycopg2
 import os
 import GMU
 import workingDates.mediaTassi
+from fastapi.middleware.cors import CORSMiddleware
+
+
 
 app = FastAPI()
 load_dotenv()
@@ -17,6 +20,15 @@ DB_CONFIG = {
     "dbname": os.getenv("DB_NAME"),
     "password": os.getenv("DB_PASSWORD")
 }
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Per test puoi mettere "*", in produzione specifica i domini
+    allow_credentials=True,
+    allow_methods=["*"],  # Permetti tutti i metodi (GET, POST, etc.)
+    allow_headers=["*"],  # Permetti tutti gli headers
+)
+
 
 def get_connection():
     return psycopg2.connect(**DB_CONFIG)
