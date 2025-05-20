@@ -24,7 +24,7 @@ DB_CONFIG = {
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Per test puoi mettere "*", in produzione specifica i domini
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],  # Permetti tutti i metodi (GET, POST, etc.)
     allow_headers=["*"],  # Permetti tutti gli headers
 )
