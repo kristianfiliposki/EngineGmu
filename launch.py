@@ -72,9 +72,10 @@ def insert_gmu_5m():
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
-                CREATE TABLE IF NOT EXISTS gmu_5m (
-                    timestamp TIMESTAMP PRIMARY KEY,
-                    gmu_value DOUBLE PRECISION
+              CREATE TABLE gmu_5m (
+                timestamp TIMESTAMP PRIMARY KEY,
+                gmu_value NUMERIC(18, 6) 
+);
                 )
             """)
             cursor.execute("""
