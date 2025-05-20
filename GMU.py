@@ -24,7 +24,7 @@ def GMU():
 
     """ dati calcolati """
     countries=effects.country.dataCountry()
-    tassi=effects.tassodicambio.tassidicambio3()
+    tassi=effects.tassodicambio.media_tassi_cambio()
     old, new = effects.history_dates.scarica_dati_storici()
     mediaValValutari=workingDates.mediaTassi.mediaTassi(tassi,old,new)
     print("media mondiale delle valute: ",mediaValValutari)
@@ -67,7 +67,7 @@ def Sommatoria(tassi,media,countries,alpha,beta,oldData,newData):
     return sommatoria 
 
 def ratingList():
-    tassi=effects.tassodicambio.tassidicambio3()
+    tassi=effects.tassodicambio.media_tassi_cambio()
     old, new = effects.history_dates.scarica_dati_storici()
     return workingDates.ratingDate.listratingcoin(tassi,old,new)
 

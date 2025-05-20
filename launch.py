@@ -29,7 +29,7 @@ def get_last_price():
 @app.get("/avgWorldValue")
 def ratingList():
     import effects
-    tassi=effects.tassodicambio.tassidicambio3()
+    tassi=effects.tassodicambio.media_tassi_cambio()
     old, new = effects.history_dates.scarica_dati_storici()
     mediaValValutari=workingDates.mediaTassi.mediaTassi(tassi,old,new)
     return  mediaValValutari
