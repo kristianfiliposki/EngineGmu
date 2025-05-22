@@ -47,19 +47,16 @@ def ratingList():
     return  mediaValValutari
 
 @app.get("/5m")
-def get_gmu_today():
-    today = datetime.now().strftime("%Y-%m-%d")
+def get_all_gmu():
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT timestamp, gmu_value
                 FROM gmu_5m
-                WHERE timestamp::date = %s
                 ORDER BY timestamp ASC;
-            """, (today,))
+            """)
             rows = cur.fetchall()
             return [{"timestamp": row[0], "gmu_value": row[1]} for row in rows]
-
 
 @app.get("/1d")
 def get_daily_summary():
