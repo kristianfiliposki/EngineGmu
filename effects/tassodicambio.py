@@ -26,21 +26,35 @@ VALUTE_FIAT = {
     "YER","ZAR","ZMW","ZWL"
 }
 
+import requests
+from collections import defaultdict
+
 def scarica_dati_fonte(url, key):
     """Scarica i tassi da una singola fonte, ritorna dict valuta -> valore"""
     try:
-        r = requests.get(url, timeout=6)
+        print(f"[INFO] Scaricamento da {url} ...")
+        r = requests.get(url, timeout=2)  # Timeout breve
         r.raise_for_status()
         dati = r.json()
         raw_rates = dati.get(key, {})
-        # Normalizza chiavi e filtra solo valute fiat con valore numerico valido
-        return {k.upper(): float(v) for k, v in raw_rates.items() if k.upper() in VALUTE_FIAT and isinstance(v, (int, float))}
-    except Exception as e:
-        print(f"[ERRORE] Recupero dati da {url} fallito: {e}")
-        return {}
 
-def media_tassi_cambio():
-    """Recupera dati da tutte le fonti, media i tassi per ogni valuta e ritorna dict valuta->media"""
+        return {
+            k.upper(): float(v)
+            for k, v in raw_rates.items()
+            if k.upper() in VALUTE_FIAT and isinstance(v, (int, float))
+        }
+
+    except requests.exceptions.Timeout:
+        print(f"[AVVISO] Timeout su {url}, passo alla prossima fonte.")
+    except requests.exceptions.HTTPError as e:
+        print(f"[AVVISO] Errore HTTP su {url}: {e}")
+    except Exception as e:
+        print(f"[ERRORE] Errore imprevisto da {url}: {e}")
+    
+    return {}  # In tutti i casi problematici, torna un dizionario vuoto
+
+def media_tassi_cambio(min_fonti=1):
+    """Recupera dati da tutte le fonti, media i tassi per ogni valuta che ha almeno 'min_fonti' fonti valide."""
     raccolta_valori = defaultdict(list)
     
     # Raccogli i valori da tutte le fonti
@@ -49,16 +63,14 @@ def media_tassi_cambio():
         for valuta, valore in dati.items():
             raccolta_valori[valuta].append(valore)
     
-    # Calcola la media solo per valute con almeno un dato disponibile
+    # Calcola la media solo per valute con almeno min_fonti valori
     medie = {}
-    for valuta in VALUTE_FIAT:
-        valori = raccolta_valori.get(valuta)
-        if valori:
+    for valuta, valori in raccolta_valori.items():
+        if len(valori) >= min_fonti:
             medie[valuta] = sum(valori) / len(valori)
-        else:
-            medie[valuta] = None  # Nessun dato per questa valuta
     
     return medie
+
 
 # Esempio d’uso:
 if __name__ == "__main__":
