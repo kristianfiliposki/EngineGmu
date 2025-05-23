@@ -77,22 +77,29 @@ def get_daily_summary():
 @app.get("/insert5m")
 def insert_gmu_5m():
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        value = GMU.GMU()
+        print(f"Inserendo GMU: {value} al timestamp {timestamp}")
+        
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS gmu_5m (
+                        timestamp TIMESTAMP PRIMARY KEY,
+                        gmu_value DOUBLE PRECISION
+                    )
+                """)
+                cursor.execute("""
+                    INSERT INTO gmu_5m (timestamp, gmu_value)
+                    VALUES (%s, %s)
+                    ON CONFLICT (timestamp) DO UPDATE SET gmu_value = EXCLUDED.gmu_value
+                """, (timestamp, value))
 
-    with get_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS gmu_5m (
-                    timestamp TIMESTAMP PRIMARY KEY,
-                    gmu_value DOUBLE PRECISION
-                )
-            """)
-            cursor.execute("""
-                INSERT INTO gmu_5m (timestamp, gmu_value)
-                VALUES (%s, %s)
-                ON CONFLICT (timestamp) DO UPDATE SET gmu_value = EXCLUDED.gmu_value
-            """, (timestamp, GMU.GMU()))
+        return {"message": "Inserito GMU", "value": value, "timestamp": timestamp}
 
-    return {"message": "Inserito GMU", "value": GMU.GMU(), "timestamp": timestamp}
+    except Exception as e:
+        print("Errore durante l'inserimento GMU:", str(e))
+        return {"error": str(e)}
 
 
 @app.get("/insert1h")
