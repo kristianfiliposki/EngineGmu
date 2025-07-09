@@ -2,8 +2,9 @@ import requests
 from collections import defaultdict
 
 # FONTI DATI: (URL, chiave nel JSON contenente i tassi)
+#https://www.linkedin.com/in/kristian-filiposki-170461290/
 FONTI = [
-    ("https://v6.exchangerate-api.com/v6/635b1b63c19c4f138ea549eb/latest/USD", "conversion_rates"),
+    
     ("https://api.fxfeed.io/v1/latest?base=USD&currencies=USD,EUR,GBP,JPY,AUD,CAD,CHF,CNY,SEK,NZD&api_key=fxf_U2GAfe5vyNEis8wF3IGA", "rates"),
     ("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json", "usd"),
     ("https://api.exconvert.com/fetchAll?from=USD&access_key=ca810f03-0b0ee55d-2ef85fea-5454cd09", "rates"),
@@ -33,7 +34,7 @@ def scarica_dati_fonte(url, key):
     """Scarica i tassi da una singola fonte, ritorna dict valuta -> valore"""
     try:
         print(f"[INFO] Scaricamento da {url} ...")
-        r = requests.get(url, timeout=2)  # Timeout breve
+        r = requests.get(url, timeout=3)  # Timeout breve
         r.raise_for_status()
         dati = r.json()
         raw_rates = dati.get(key, {})

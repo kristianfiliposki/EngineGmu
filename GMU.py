@@ -43,28 +43,38 @@ def GMU():
     return gmu
 
 def Sommatoria(tassi,media,countries,alpha,beta,oldData,newData):
+    if not "BTC" in tassi:
+        tassi["BTC"]=effects.cuscinetti.btc_price()
+    if not "XAU" in tassi:
+        tassi["XAU"]=effects.cuscinetti.gold_price()
     sommatoria=0
     totUS=0
     totSt=0
     poptot=effects.worldPopulationDate.pop_world_number()
     for coin in tassi:
-        pop=workingDates.populationCoin.populationCoin(coin,countries)
-        if pop==0:
-            continue
-        
-        rapporto = tassi[coin] / media
-        if rapporto <= 0:
-             continue  # salta valuta anomala
-        tassoNormalizzato = rapporto
-         # Limitiamo gli estremi per maggiore stabilità (anti-outlier)
-        tassoNormalizzato = max(min(tassoNormalizzato, 0.3), -0.3)
-        usabilita=math.log(pop)/math.log(poptot)
-        totUS+=usabilita
         stabilita=workingDates.ratingDate.ratingCoin(coin,oldData,newData)["stability_score"]
-        totSt+=stabilita
-        sommatoria+=tassoNormalizzato*(1+((alpha*usabilita)+(beta*stabilita)))
+        if  0.4<=stabilita<=1:
+            pop=workingDates.populationCoin.populationCoin(coin,countries)
+            if coin=="XAU":
+                print(coin,": dsadsasd ",pop)
+            if pop==0:
+                continue
+            rapporto = tassi[coin] / media
+
+            if rapporto <= 0:
+                continue  # salta valuta anomala
+            tassoNormalizzato = rapporto
+            # Limitiamo gli estremi per maggiore stabilità (anti-outlier)
+            usabilita=pop/poptot
+            totUS+=usabilita
+            totSt+=stabilita
+            sommatoria+=tassoNormalizzato*(1+((alpha*usabilita)+(beta*stabilita)))
+        else: continue
+        
     print(sommatoria)
     return sommatoria 
+
+
 
 def ratingList():
     tassi=effects.tassodicambio.media_tassi_cambio()

@@ -30,6 +30,7 @@ def ratingCoin(coin, old_data, new_data):
 
 
 
+
 def listratingcoin(tassi,old,new):
     """ dati calcolati """
     lista=[]
